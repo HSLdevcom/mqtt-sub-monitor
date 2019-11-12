@@ -1,0 +1,17 @@
+name: mqtt-env
+
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - pylint
+  - pytest
+  - apscheduler
+  - geopandas
+  - flask
+  - flask-cors
+  - flask-testing
+  - requests
+  - pip
+  - pip:
+    - paho-mqtt
