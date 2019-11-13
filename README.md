@@ -1,6 +1,5 @@
 # mqtt-sub-monitor
 
-
 ## Installation
 ```
 $ git clone git@github.com:hellej/mqtt-sub-monitor.git
