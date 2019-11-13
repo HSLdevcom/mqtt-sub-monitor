@@ -14,7 +14,7 @@ class MqttSubscriber:
         self.client.on_message = self.on_message
         self.client.connect(self.host, 1883, 10)
         self.client.subscribe(self.topic, qos=1)
-        self.client.loop_forever()
+        self.client.loop_start()
 
     def on_connect(self, client, userdata, flags, rc):
         print('connected with result code '+str(rc))
