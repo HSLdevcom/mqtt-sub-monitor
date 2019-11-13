@@ -1,19 +1,20 @@
-from apscheduler.schedulers.background import BackgroundScheduler
+from flask import Flask, jsonify
 from mqtt_subscriber import MqttSubscriber
-from datetime import datetime
+from sub_monitor import SubMonitor
+
+app = Flask(__name__)
 
 mqtt_sub = MqttSubscriber(host='mqtt.hsl.fi', topic='/hfp/v2/journey/ongoing/#')
-
-def report_stats():
-    low_msg_rate_str = 'low msg rate in sub:\n' if mqtt_sub.msg_count < 100 else '' 
-    msg_rate_str = str(mqtt_sub.msg_count) +' msg/2s at '+ datetime.utcnow().strftime('%y/%m/%d %H:%M:%S')
-    with open('sub_log.txt', 'a') as the_file:
-        the_file.write(low_msg_rate_str)
-        the_file.write(msg_rate_str +'\n')
-    mqtt_sub.reset_msg_count()
-
-mqtt_monitor = BackgroundScheduler()
-mqtt_monitor.add_job(report_stats, 'interval', seconds=2)
-mqtt_monitor.start()
-
+sub_monitor = SubMonitor(mqtt_sub, 2)
 mqtt_sub.start_sub()
+
+@app.route("/anomalies")
+def anomaly_logs():
+    return jsonify(sub_monitor.get_anomaly_log())
+
+@app.route("/status")
+def sub_status():
+    return jsonify(sub_monitor.get_status())
+
+if __name__ == '__main__':
+    app.run(debug=False,host='0.0.0.0')
