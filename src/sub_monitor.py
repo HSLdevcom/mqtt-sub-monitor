@@ -30,10 +30,10 @@ class SubMonitor:
                 'msg_rate_change_p': round(rate_change_ratio*100, 2)
             }
 
-            if (rate_change_ratio > 0.7):
+            if (rate_change_ratio > 0.5):
                 log('msg rate increased:')
                 self.anomaly_log.append(status_dict)
-            if (rate_change_ratio < -0.7):
+            if (rate_change_ratio < -0.5):
                 log('msg rate dropped:')
                 self.anomaly_log.append(status_dict)
             log(msg_rate_str)
