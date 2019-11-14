@@ -1,11 +1,22 @@
+import os
+import sys
 from flask import Flask, jsonify
 from mqtt_subscriber import MqttSubscriber
 from sub_monitor import SubMonitor
 
 app = Flask(__name__)
 
-mqtt_sub = MqttSubscriber(host='mqtt.hsl.fi', topic='/hfp/v2/journey/ongoing/#')
-sub_monitor = SubMonitor(mqtt_sub, 2)
+# mqtt_host='mqtt.hsl.fi'
+# mqtt_topic='/hfp/v2/journey/ongoing/#'
+try:
+    mqtt_host = os.environ['MQTT_HOST']
+    mqtt_topic = os.environ['MQTT_TOPIC']
+except Exception:
+    print('env variables MQTT_HOST or MQTT_TOPIC missing, exiting app')
+    sys.exit()
+
+mqtt_sub = MqttSubscriber(mqtt_host, mqtt_topic)
+sub_monitor = SubMonitor(mqtt_sub, monitor_interval_secs=4)
 mqtt_sub.start_sub()
 
 @app.route('/')
