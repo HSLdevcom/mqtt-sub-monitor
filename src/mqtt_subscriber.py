@@ -1,5 +1,6 @@
 import paho.mqtt.client as mqtt
 from datetime import datetime
+from logger import log
 
 class MqttSubscriber:
 
@@ -17,16 +18,12 @@ class MqttSubscriber:
         self.client.loop_start()
 
     def on_connect(self, client, userdata, flags, rc):
-        print('connected with result code '+str(rc))
-        connect_info = 'connected with result code '+str(rc)+' at '+ datetime.utcnow().strftime('%y/%m/%d %H:%M:%S')
-        broker_info = 'broker: '+ self.host + ' topic: '+ self.topic
-        with open('sub_log.txt', 'a') as the_file:
-            the_file.write(connect_info +'\n')
-            the_file.write(broker_info + '\n')
+        log('connecting to broker: '+ self.host, b_print=True)
+        log('connected with result code '+ str(rc))
         self.client.subscribe(self.topic)
+        log('subscribed to topic: '+ self.topic)
 
     def on_message(self, client, userdata, msg):
-        # print(msg.topic)
         self.msg_count += 1
 
     def reset_msg_count(self):

@@ -1,6 +1,7 @@
 
 src/.vscode/
 src/__pycache__/
+src/archive
 src/sub_rate_log.txt
 src/sub_log.txt
 .DS_Store

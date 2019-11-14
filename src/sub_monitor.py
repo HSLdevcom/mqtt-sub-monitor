@@ -22,7 +22,7 @@ class SubMonitor:
         if (self.prev_msg_count is not None and self.prev_msg_count > 0):
             rate_change_ratio = round((current_count - self.prev_msg_count)/self.prev_msg_count, 2)
             rate_change_str = str(round(rate_change_ratio * 100))
-            msg_rate_str = time_str + ' - ' + str(current_count) +' msg/'+str(self.monitor_interval_secs)+'s - '+ rate_change_str + ' %'
+            msg_rate_str = str(current_count) +' msg/'+str(self.monitor_interval_secs)+'s - '+ rate_change_str + ' %'
             
             status_dict = { 
                 'time_utc': time_str, 
