@@ -26,7 +26,7 @@ class SubMonitor:
             
             status_dict = { 
                 'time_utc': time_str, 
-                'msg_rate_2s': current_count,
+                'msg_rate_'+str(self.monitor_interval_secs)+'s': current_count,
                 'msg_rate_change_p': round(rate_change_ratio*100, 2)
             }
 
@@ -46,7 +46,7 @@ class SubMonitor:
 
     def get_status(self):
         return {
-            'msg_rate_2s': self.prev_msg_count,
+            'msg_rate_'+str(self.monitor_interval_secs)+'s': self.prev_msg_count,
             'broker': self.mqtt_sub.host,
             'topic': self.mqtt_sub.topic,
             'last_msg_time_utc': self.prev_msg_time
