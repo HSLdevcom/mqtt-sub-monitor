@@ -14,9 +14,13 @@ try:
 except Exception:
     print('env variables MQTT_HOST or MQTT_TOPIC missing, exiting app')
     sys.exit()
+try:
+    monitor_interval_secs = int(os.environ['INTERVAL_SECS'])
+except Exception:
+    monitor_interval_secs = 4
 
 mqtt_sub = MqttSubscriber(mqtt_host, mqtt_topic)
-sub_monitor = SubMonitor(mqtt_sub, monitor_interval_secs=4)
+sub_monitor = SubMonitor(mqtt_sub, monitor_interval_secs)
 mqtt_sub.start_sub()
 
 @app.route('/')
