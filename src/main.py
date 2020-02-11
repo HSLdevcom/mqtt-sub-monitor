@@ -3,24 +3,22 @@ import sys
 from flask import Flask, jsonify
 from mqtt_subscriber import MqttSubscriber
 from sub_monitor import SubMonitor
+from utils.env_vars import set_env_vars
+from utils.logger import Logger
 
+log = Logger()
+set_env_vars(log)
 app = Flask(__name__)
 
-# mqtt_host='mqtt.hsl.fi'
-# mqtt_topic='/hfp/v2/journey/ongoing/#'
-try:
-    mqtt_host = os.environ['MQTT_HOST']
-    mqtt_topic = os.environ['MQTT_TOPIC']
-except Exception:
-    print('env variables MQTT_HOST or MQTT_TOPIC missing, exiting app')
-    sys.exit()
-try:
-    monitor_interval_secs = int(os.environ['INTERVAL_SECS'])
-except Exception:
-    monitor_interval_secs = 4
+flask_port = int(os.environ['FLASK_PORT']) if ('FLASK_PORT' in os.environ) else 5000
+mqtt_host = os.environ['MQTT_HOST']
+mqtt_topic = os.environ['MQTT_TOPIC']
+msg_rate_monitoring: bool = bool(os.environ['MSG_RATE_MONITORING']) if ('MSG_RATE_MONITORING' in os.environ) else True
+msg_rate_interval_secs = int(os.environ['MSG_RATE_INTERVAL_SECS']) if ('MSG_RATE_INTERVAL_SECS' in os.environ) else 5
+recording: bool = bool(os.environ['RECORDING']) if ('RECORDING' in os.environ) else False
 
-mqtt_sub = MqttSubscriber(mqtt_host, mqtt_topic)
-sub_monitor = SubMonitor(mqtt_sub, monitor_interval_secs)
+mqtt_sub = MqttSubscriber(log, mqtt_host, mqtt_topic)
+sub_monitor = SubMonitor(log, mqtt_sub, msg_rate_interval_secs)
 mqtt_sub.start_sub()
 
 @app.route('/')
@@ -36,4 +34,4 @@ def sub_status():
     return jsonify(sub_monitor.get_status())
 
 if __name__ == '__main__':
-    app.run(debug=False,host='0.0.0.0')
+    app.run(debug=False, host='0.0.0.0', port=flask_port)

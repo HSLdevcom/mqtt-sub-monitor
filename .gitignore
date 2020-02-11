@@ -1,5 +1,6 @@
 
 src/.vscode/
+src/.env
 src/__pycache__/
 src/archive
 src/sub_rate_log.txt
