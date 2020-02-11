@@ -15,6 +15,8 @@ class SubMonitor:
         self.scheduler = BackgroundScheduler()
         self.scheduler.add_job(self.report_sub_stats, 'interval', seconds=monitor_interval_secs)
         self.log.info('starting msg rate monitoring with interval (s): '+ str(monitor_interval_secs))
+    
+    def start(self):
         self.scheduler.start()
 
     def report_sub_stats(self):

@@ -1,5 +1,6 @@
 import os
 import sys
+from distutils.util import strtobool
 from flask import Flask, jsonify
 from mqtt_subscriber import MqttSubscriber
 from sub_monitor import SubMonitor
@@ -10,15 +11,19 @@ log = Logger()
 set_env_vars(log)
 app = Flask(__name__)
 
-flask_port = int(os.environ['FLASK_PORT']) if ('FLASK_PORT' in os.environ) else 5000
-mqtt_host = os.environ['MQTT_HOST']
-mqtt_topic = os.environ['MQTT_TOPIC']
-msg_rate_monitoring: bool = bool(os.environ['MSG_RATE_MONITORING']) if ('MSG_RATE_MONITORING' in os.environ) else True
-msg_rate_interval_secs = int(os.environ['MSG_RATE_INTERVAL_SECS']) if ('MSG_RATE_INTERVAL_SECS' in os.environ) else 5
-recording: bool = bool(os.environ['RECORDING']) if ('RECORDING' in os.environ) else False
+flask_port = int(os.getenv('FLASK_PORT')) if ('FLASK_PORT' in os.environ) else 5000
+mqtt_host = os.getenv('MQTT_HOST')
+mqtt_topic = os.getenv('MQTT_TOPIC')
+msg_rate_monitoring: bool = bool(strtobool(os.getenv('MSG_RATE_MONITORING'))) if ('MSG_RATE_MONITORING' in os.environ) else True
+msg_rate_interval_secs = int(os.getenv('MSG_RATE_INTERVAL_SECS')) if ('MSG_RATE_INTERVAL_SECS' in os.environ) else 5
+recording: bool = bool(strtobool(os.getenv('RECORDING'))) if ('RECORDING' in os.environ) else False
 
 mqtt_sub = MqttSubscriber(log, mqtt_host, mqtt_topic)
 sub_monitor = SubMonitor(log, mqtt_sub, msg_rate_interval_secs)
+
+if (msg_rate_monitoring == True):
+    sub_monitor.start()
+
 mqtt_sub.start_sub()
 
 @app.route('/')
