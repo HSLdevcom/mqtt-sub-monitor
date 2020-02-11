@@ -1,7 +1,7 @@
 import paho.mqtt.client as mqtt
 from datetime import datetime
+from mqtt_recorder import MqttRecorder
 from utils.logger import Logger
-from utils.mqtt_recorder import MqttRecorder
 
 class MqttSubscriber:
 

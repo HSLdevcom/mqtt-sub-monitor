@@ -3,7 +3,7 @@ from mqtt_subscriber import MqttSubscriber
 from datetime import datetime
 from utils.logger import Logger
 
-class SubMonitor:
+class MqttMsgRateMonitor:
 
     def __init__(self, log: Logger, mqtt_sub: MqttSubscriber, monitor_interval_secs: int):
         self.log = log

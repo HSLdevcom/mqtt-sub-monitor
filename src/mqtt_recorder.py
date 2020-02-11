@@ -1,7 +1,7 @@
 import os
 from apscheduler.schedulers.background import BackgroundScheduler
-from utils.logger import Logger
 from datetime import datetime
+from utils.logger import Logger
 
 class MqttRecorder:
 
