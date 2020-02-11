@@ -1,5 +1,6 @@
 
 src/.vscode/
+src/records/
 src/.env
 __pycache__/
 src/archive
