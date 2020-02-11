@@ -20,10 +20,13 @@ class MqttRecorder:
     def get_new_record_file_name(self) -> str:
         return self.records_dir + datetime.utcnow().strftime('%y-%m-%d-%H') + 'UTC.txt'
 
+    def get_write_time(self):
+        return datetime.utcnow().strftime('%y/%m/%d %H:%M:%S.%f')[:-4] + '-UTC'
+
     def record(self, msg) -> None:
         if (self.disabled != True):
             with open(self.current_record_file, 'a') as the_file:
-                the_file.write(msg.topic +' '+ str(msg.payload) + '\n')
+                the_file.write(self.get_write_time() +' '+ msg.topic +' '+ str(msg.payload) + '\n')
 
     def setup_recorder_updater(self) -> None:
         self.scheduler = BackgroundScheduler()
