@@ -25,6 +25,7 @@ msg_rate_monitor = MqttMsgRateMonitor(log, mqtt_sub, msg_rate_interval_secs)
 if (msg_rate_monitoring == True):
     msg_rate_monitor.start()
 
+recorder: MqttRecorder = None
 if (recording == True):
     recorder = MqttRecorder(log, 'records/', hourly_files=record_hourly_files, max_record_size_gb=max_record_size_gb)
     mqtt_sub.add_recorder(recorder)
@@ -35,7 +36,14 @@ app = Flask(__name__)
 
 @app.route('/')
 def default():
-    return "paths available: /msg_rate_anomalies & /msg_rate_status" 
+    return "paths available: /recorder_status, /msg_rate_anomalies & /msg_rate_status" 
+
+@app.route('/recorder_status')
+def recorder_status():
+    if (recorder is not None):
+        return jsonify(recorder.get_status())
+    else: 
+        return 'no recorder found'
 
 @app.route('/msg_rate_anomalies')
 def anomaly_logs():
