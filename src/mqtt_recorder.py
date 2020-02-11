@@ -10,6 +10,7 @@ class MqttRecorder:
         self.disabled: bool = False
         self.records_dir: str = records_dir
         self.current_record_file: str = self.get_new_record_name()
+        self.all_record_files: list = [self.get_new_record_name()]
         self.max_record_size_gb: int = max_record_size_gb
         self.b_hourly_files: bool = hourly_files
         self.scheduler = None
@@ -45,8 +46,10 @@ class MqttRecorder:
         self.scheduler.start()
 
     def maybe_update_record_file(self) -> None:
-        if (self.current_record_file != self.get_new_record_name()):
-            self.current_record_file = self.get_new_record_name()
+        new_record_name = self.get_new_record_name()
+        if (self.current_record_file != new_record_name):
+            self.current_record_file = new_record_name
+            self.all_record_files.append(new_record_name)
 
     def get_records_size_mb(self):
         records_size = sum(os.path.getsize(self.records_dir + f) for f in os.listdir(self.records_dir) if os.path.isfile(self.records_dir + f))
@@ -84,4 +87,5 @@ class MqttRecorder:
             'recording_rate_mb_h': round(self.recording_rate_mb_s*60*60, 3),
             'max_record_size_G': self.max_record_size_gb,
             'current_record_file': self.current_record_file,
+            'all_record_files': self.all_record_files,
         }

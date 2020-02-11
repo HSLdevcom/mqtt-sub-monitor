@@ -1,7 +1,8 @@
 import os
 import sys
 from distutils.util import strtobool
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory
+from markupsafe import escape
 from mqtt_subscriber import MqttSubscriber
 from mqtt_msg_rate_monitor import MqttMsgRateMonitor
 from mqtt_recorder import MqttRecorder
@@ -36,13 +37,27 @@ app = Flask(__name__)
 
 @app.route('/')
 def default():
-    return "paths available: /recorder_status, /msg_rate_anomalies & /msg_rate_status" 
+    return "paths available: /recorder_status, /get_latest_record, /get_record/<record_name>, /msg_rate_anomalies & /msg_rate_status" 
 
 @app.route('/recorder_status')
 def recorder_status():
     if (recorder is not None):
         return jsonify(recorder.get_status())
     else: 
+        return 'no recorder found'
+
+@app.route('/get_latest_record')
+def latest_record():
+    if (recorder is not None):
+        return send_from_directory(recorder.records_dir, recorder.current_record_file)
+    else:
+        return 'no recorder found'
+
+@app.route('/get_record/<record_name>')
+def specific_record(record_name):
+    if (recorder is not None):
+        return send_from_directory(recorder.records_dir, escape(record_name))
+    else:
         return 'no recorder found'
 
 @app.route('/msg_rate_anomalies')
