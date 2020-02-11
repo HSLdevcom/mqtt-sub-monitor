@@ -1,11 +1,12 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from mqtt_subscriber import MqttSubscriber
 from datetime import datetime
-from logger import log
+from utils.logger import Logger
 
 class SubMonitor:
 
-    def __init__(self, mqtt_sub: MqttSubscriber, monitor_interval_secs: int):
+    def __init__(self, log: Logger, mqtt_sub: MqttSubscriber, monitor_interval_secs: int):
+        self.log = log
         self.mqtt_sub = mqtt_sub
         self.monitor_interval_secs = monitor_interval_secs
         self.prev_msg_count = None
@@ -13,6 +14,7 @@ class SubMonitor:
         self.anomaly_log = []
         self.scheduler = BackgroundScheduler()
         self.scheduler.add_job(self.report_sub_stats, 'interval', seconds=monitor_interval_secs)
+        self.log.info('starting msg rate monitoring with interval (s): '+ str(monitor_interval_secs))
         self.scheduler.start()
 
     def report_sub_stats(self):
@@ -30,13 +32,13 @@ class SubMonitor:
                 'msg_rate_change_p': round(rate_change_ratio*100, 2)
             }
 
-            if (rate_change_ratio > 0.5):
-                log('msg rate increased:')
+            if (rate_change_ratio > 0.6):
+                self.log.msg_rate_info('msg rate increased:')
                 self.anomaly_log.append(status_dict)
-            if (rate_change_ratio < -0.5):
-                log('msg rate dropped:')
+            if (rate_change_ratio < -0.6):
+                self.log.msg_rate_waring('msg rate dropped:')
                 self.anomaly_log.append(status_dict)
-            log(msg_rate_str)
+            self.log.msg_rate_info(msg_rate_str)
 
         self.prev_msg_count = current_count
         self.prev_msg_time = time_str

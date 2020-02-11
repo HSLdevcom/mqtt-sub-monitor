@@ -1,8 +1,10 @@
 
 src/.vscode/
 src/.env
-src/__pycache__/
+__pycache__/
 src/archive
 src/sub_rate_log.txt
 src/sub_log.txt
 .DS_Store
+src/sub_monitor.log
+src/sub_msg_rate.log
