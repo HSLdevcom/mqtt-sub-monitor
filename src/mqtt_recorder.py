@@ -9,26 +9,26 @@ class MqttRecorder:
         self.log = log
         self.disabled: bool = False
         self.records_dir: str = records_dir
-        self.current_record_file: str = self.get_new_record_file_name()
+        self.current_record_file: str = self.get_new_record_name()
         self.max_record_size_gb: int = max_record_size_gb
         self.b_hourly_files: bool = hourly_files
         self.scheduler = None
         self.setup_recorder_updater()
         self.last_status_time = datetime.utcnow()
-        self.last_record_size = self.get_records_size_gb()
+        self.last_record_size = 0
         self.recording_rate_mb_s = 0
         self.log.info('set maximum record size to: '+ str(max_record_size_gb) +' G')
         self.log.info('starting mqtt recording to: '+ self.current_record_file)
 
-    def get_new_record_file_name(self) -> str:
-        return self.records_dir + datetime.utcnow().strftime('%y-%m-%d-%H') + 'UTC.txt'
+    def get_new_record_name(self) -> str:
+        return datetime.utcnow().strftime('%y-%m-%d-%H') + 'UTC.txt'        
 
     def get_write_time(self):
         return datetime.utcnow().strftime('%y/%m/%d %H:%M:%S.%f')[:-4] + '-UTC'
 
     def record(self, msg) -> None:
         if (self.disabled != True):
-            with open(self.current_record_file, 'a') as the_file:
+            with open(self.records_dir + self.current_record_file, 'a') as the_file:
                 the_file.write(self.get_write_time() +' '+ msg.topic +' '+ str(msg.payload) + '\n')
 
     def setup_recorder_updater(self) -> None:
@@ -45,8 +45,8 @@ class MqttRecorder:
         self.scheduler.start()
 
     def maybe_update_record_file(self) -> None:
-        if (self.current_record_file != self.get_new_record_file_name()):
-            self.current_record_file = self.get_new_record_file_name()
+        if (self.current_record_file != self.get_new_record_name()):
+            self.current_record_file = self.get_new_record_name()
 
     def get_records_size_mb(self):
         records_size = sum(os.path.getsize(self.records_dir + f) for f in os.listdir(self.records_dir) if os.path.isfile(self.records_dir + f))
@@ -83,4 +83,5 @@ class MqttRecorder:
             'recording_rate_mb_s': round(self.recording_rate_mb_s, 3),
             'recording_rate_mb_h': round(self.recording_rate_mb_s*60*60, 3),
             'max_record_size_G': self.max_record_size_gb,
+            'current_record_file': self.current_record_file,
         }
