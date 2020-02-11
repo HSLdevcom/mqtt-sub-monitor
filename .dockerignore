@@ -1,3 +1,6 @@
+.git
 */.env
-*/.sub_monitor.log
-*/.sub_msg_rate.log
+*/records/*
+*/sub_monitor.log
+*/sub_msg_rate.log
+**/__pycache__
