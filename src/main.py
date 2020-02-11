@@ -35,16 +35,15 @@ app = Flask(__name__)
 
 @app.route('/')
 def default():
-    return "paths available: /anomalies & /status" 
+    return "paths available: /msg_rate_anomalies & /msg_rate_status" 
 
-@app.route('/anomalies')
+@app.route('/msg_rate_anomalies')
 def anomaly_logs():
     return jsonify(msg_rate_monitor.get_anomaly_log())
 
-@app.route('/status')
+@app.route('/msg_rate_status')
 def sub_status():
     return jsonify(msg_rate_monitor.get_status())
-
 
 flask_port = int(os.getenv('FLASK_PORT')) if ('FLASK_PORT' in os.environ) else 5000
 
