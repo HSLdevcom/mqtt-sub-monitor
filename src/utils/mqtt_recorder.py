@@ -16,9 +16,9 @@ class MqttRecorder:
     def get_new_record_file_name(self):
         return self.records_dir + datetime.utcnow().strftime('%y-%m-%d-%H') + 'UTC.txt'
 
-    def record(self, payload):
+    def record(self, msg):
         with open(self.current_record_file, 'a') as the_file:
-            the_file.write(str(payload) + '\n')
+            the_file.write(msg.topic +' '+ str(msg.payload) + '\n')
 
     def set_recording_to_hourly_files(self):
         self.scheduler = BackgroundScheduler()

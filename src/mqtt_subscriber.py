@@ -32,7 +32,7 @@ class MqttSubscriber:
     def on_message(self, client, userdata, msg):
         self.msg_count += 1
         if (self.recorder is not None):
-            self.recorder.record(msg.payload)
+            self.recorder.record(msg)
 
     def reset_msg_count(self):
         self.msg_count = 0
