@@ -34,7 +34,6 @@ class AzureBlobUploader:
 
     def upload_records(self):
         records_to_upload = self.writer.get_records()
-        uploaded = []
         for to_upload in records_to_upload:
             if (to_upload not in self.uploaded_records):
                 try:
@@ -42,6 +41,11 @@ class AzureBlobUploader:
                     self.blob_service.create_blob_from_path(
                         self.blob_container_name, to_upload, self.records_dir + to_upload)
                     self.uploaded_records.append(to_upload)
+                    self.delete_uploaded_file(to_upload)
                 except Exception:
-                    sleep(5)
+                    sleep(2)
                     pass
+    
+    def delete_uploaded_file(self, uploaded):
+        if os.path.exists(self.records_dir + uploaded):
+                os.remove(self.records_dir + uploaded)
