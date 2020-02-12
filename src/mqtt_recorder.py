@@ -2,13 +2,14 @@ import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
 from utils.rotating_record_file_writer import RotatingRecordFileWriter
+from utils.azure_blob_uploader import AzureBlobUploader
 from utils.logger import Logger
 
 class MqttRecorder:
 
-    def __init__(self, log: Logger, records_dir: str = 'records/', max_storage_size_gb: float = None, max_record_size_mb: float = None):
+    def __init__(self, log: Logger, writer: RotatingRecordFileWriter, records_dir: str = 'records/', max_storage_size_gb: float = None):
         self.log = log
-        self.writer = RotatingRecordFileWriter(log, records_dir=records_dir, max_record_size_mb=max_record_size_mb)
+        self.writer = writer
         self.disabled: bool = True
         self.records_dir: str = records_dir
         self.max_storage_size_gb: float = max_storage_size_gb
@@ -45,6 +46,8 @@ class MqttRecorder:
             if (self.get_storage_size_gb() >= self.max_storage_size_gb):
                 self.log.warning('reached maximum record size ('+ str(self.max_storage_size_gb) +' G), recording disabled from now on')
                 self.disabled = True
+            else:
+                self.disabled = False
 
     def log_recording_rate(self) -> None:
         status_update_time = datetime.utcnow()

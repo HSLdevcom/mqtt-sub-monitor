@@ -20,10 +20,13 @@ def set_env_vars(log: Logger):
         log.warning('no docker secrets found')
 
     try:
-        with open('.env', newline='') as csvfile:
-            reader = csv.DictReader(csvfile, fieldnames=['key', 'value'], delimiter='=')
-            for row in reader:
-                os.environ[row['key']] = row['value']
+        fh = open('.env', 'r')
+        lines = fh.read().splitlines()
+        for line in lines:
+            line.rstrip('\n')
+            row = line.partition('=')
+            os.environ[row[0]] = row[2]
+        fh.close()
     except Exception:
         log.warning('no .env file found')
         pass
