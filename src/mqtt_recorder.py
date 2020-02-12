@@ -25,7 +25,7 @@ class MqttRecorder:
         if (self.max_storage_size_gb is not None):
             self.scheduler.add_job(self.maybe_disable_recorder, 'interval', seconds=2)
 
-        self.scheduler.add_job(self.log_recording_rate, 'interval', seconds=10)
+        self.scheduler.add_job(self.log_recording_rate, 'interval', seconds=20)
         self.scheduler.start()
         self.disabled = False
 

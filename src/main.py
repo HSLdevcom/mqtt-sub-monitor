@@ -22,7 +22,7 @@ msg_rate_interval_secs = int(os.getenv('MSG_RATE_INTERVAL_SECS')) if ('MSG_RATE_
 recording: bool = bool(strtobool(os.getenv('RECORDING'))) if ('RECORDING' in os.environ) else False
 max_storage_size_gb: float = float(os.getenv('MAX_STORAGE_SIZE_GB')) if ('MAX_STORAGE_SIZE_GB' in os.environ) else None
 max_record_size_mb: int = int(os.getenv('MAX_RECORD_SIZE_MB')) if ('MAX_RECORD_SIZE_MB' in os.environ) else 500
-uploading: bool = bool(strtobool(os.getenv('AZURE_BLOB_UPLOAD_ENABLED'))) if ('AZURE_BLOB_UPLOAD_ENABLED' in os.environ) else False
+uploading: bool = bool(strtobool(os.getenv('BLOB_UPLOAD_ENABLED'))) if ('BLOB_UPLOAD_ENABLED' in os.environ) else False
 
 mqtt_sub = MqttSubscriber(log, mqtt_host, mqtt_topic)
 msg_rate_monitor = MqttMsgRateMonitor(log, mqtt_sub, msg_rate_interval_secs)

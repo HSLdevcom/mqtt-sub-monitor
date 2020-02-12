@@ -15,10 +15,10 @@ class AzureBlobUploader:
         self.uploaded_records = []
         self.scheduler = BackgroundScheduler()
         self.blob_service = None
-        self.blob_account_name: str = 'mqttrecords'
-        self.blob_container_name = os.getenv('AZURE_BLOB_CONTAINER_NAME')
-        self.blob_access_key = os.getenv('AZURE_BLOB_ACCESS_KEY')
-        self.blob_conn_string = os.getenv('AZURE_BLOB_CONNECTION_STRING')
+        self.blob_account_name: str = os.getenv('BLOB_ACCOUNT_NAME')
+        self.blob_container_name = os.getenv('BLOB_CONTAINER_NAME')
+        self.blob_lifetime_hours = float(os.getenv('BLOB_LIFETIME_HOURS')) if ('BLOB_LIFETIME_HOURS' in os.environ) else None
+        self.blob_access_key = os.getenv('BLOB_ACCESS_KEY')
 
     def start(self):
         self.blob_service = BlockBlobService(
@@ -30,6 +30,8 @@ class AzureBlobUploader:
 
         self.log.info('starting to upload records to container: '+ self.blob_container_name + ' under blob account: '+ self.blob_account_name)
         self.scheduler.add_job(self.upload_records, 'interval', seconds=5)
+        if (self.blob_lifetime_hours is not None):
+            self.scheduler.add_job(self.delete_old_blobs, 'interval', seconds=5)
         self.scheduler.start()
 
     def upload_records(self):
@@ -49,3 +51,20 @@ class AzureBlobUploader:
     def delete_uploaded_file(self, uploaded):
         if os.path.exists(self.records_dir + uploaded):
                 os.remove(self.records_dir + uploaded)
+
+    def delete_old_blobs(self):
+        generator = self.blob_service.list_blobs(self.blob_container_name)
+        blob_lifetime_secs = round(self.blob_lifetime_hours * 60 * 60)
+        utc_now = datetime.utcnow()
+        for blob in generator:
+            blob_time_str = blob.name[:17]
+            blob_time = datetime.strptime(blob_time_str, '%y-%m-%d-%H:%M:%S')
+            time_diff = utc_now - blob_time
+            blob_age_secs = round(time_diff.total_seconds())
+            if (blob_age_secs >= blob_lifetime_secs):
+                try:
+                    self.blob_service.delete_blob(self.blob_container_name, blob.name)
+                    self.log.debug('deleted blob: '+ blob.name)
+                except Exception:
+                    sleep(2)
+                    pass
