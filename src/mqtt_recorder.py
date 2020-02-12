@@ -76,5 +76,5 @@ class MqttRecorder:
             'max_storage_size_G': self.max_storage_size_gb,
             'max_record_size_M': self.writer.max_record_size_mb,
             'current_record_file': self.writer.current_record_file,
-            'all_record_files': self.writer.written_records,
+            'all_record_files': self.writer.get_records(),
         }

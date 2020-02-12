@@ -34,8 +34,11 @@ class AzureBlobUploader:
             self.scheduler.add_job(self.delete_old_blobs, 'interval', seconds=5)
         self.scheduler.start()
 
+    def get_records_to_upload(self):
+        return [fn for fn in os.listdir(self.records_dir) if ('.txt' in fn and fn != self.writer.current_record_file)]
+
     def upload_records(self):
-        records_to_upload = self.writer.get_records()
+        records_to_upload = self.get_records_to_upload()
         for to_upload in records_to_upload:
             if (to_upload not in self.uploaded_records):
                 try:
