@@ -13,7 +13,7 @@ class RotatingRecordFileWriter:
         self.current_record_file_index: int = 0
         self.max_record_size_mb: int = max_record_size_mb
         self.log.info('using max record size: '+ str(self.max_record_size_mb) + ' M')
-        self.written_records = []
+        self.records = []
         self.scheduler = BackgroundScheduler()
         self.scheduler.add_job(self.maybe_update_record_file, 'interval', seconds=2)
         self.scheduler.start()
@@ -22,9 +22,12 @@ class RotatingRecordFileWriter:
         with open(self.records_dir + self.current_record_file, 'a') as the_file:
             the_file.write(to_write_str)
 
+    def get_records(self):
+        return self.records
+
     def maybe_update_record_file(self) -> None:
         if (self.get_current_record_file_size() >= self.max_record_size_mb):
-            self.written_records.append(self.current_record_file)
+            self.records.append(self.current_record_file)
             self.current_record_file = self.get_new_record_name()
 
     def get_current_record_file_size(self) -> int:
