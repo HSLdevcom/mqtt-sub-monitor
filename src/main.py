@@ -18,12 +18,12 @@ mqtt_topic = os.getenv('MQTT_TOPIC')
 msg_rate_monitoring: bool = bool(strtobool(os.getenv('MSG_RATE_MONITORING'))) if ('MSG_RATE_MONITORING' in os.environ) else True
 msg_rate_interval_secs = int(os.getenv('MSG_RATE_INTERVAL_SECS')) if ('MSG_RATE_INTERVAL_SECS' in os.environ) else 5
 recording: bool = bool(strtobool(os.getenv('RECORDING'))) if ('RECORDING' in os.environ) else False
-record_hourly_files: bool = bool(strtobool(os.getenv('RECORD_HOURLY_FILES'))) if ('RECORD_HOURLY_FILES' in os.environ) else False
-max_record_size_gb: float = float(os.getenv('MAX_RECORD_SIZE_GB')) if ('MAX_RECORD_SIZE_GB' in os.environ) else None
+max_storage_size_gb: float = float(os.getenv('MAX_STORAGE_SIZE_GB')) if ('MAX_STORAGE_SIZE_GB' in os.environ) else None
+max_record_size_mb: int = int(os.getenv('MAX_RECORD_SIZE_MB')) if ('MAX_RECORD_SIZE_MB' in os.environ) else 500
 
 mqtt_sub = MqttSubscriber(log, mqtt_host, mqtt_topic)
 msg_rate_monitor = MqttMsgRateMonitor(log, mqtt_sub, msg_rate_interval_secs)
-recorder = MqttRecorder(log, hourly_files=record_hourly_files, max_record_size_gb=max_record_size_gb)
+recorder = MqttRecorder(log, max_storage_size_gb=max_storage_size_gb, max_record_size_mb=max_record_size_mb)
 
 if (msg_rate_monitoring == True):
     msg_rate_monitor.start()
