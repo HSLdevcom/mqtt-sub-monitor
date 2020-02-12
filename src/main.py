@@ -6,6 +6,8 @@ from markupsafe import escape
 from mqtt_subscriber import MqttSubscriber
 from mqtt_msg_rate_monitor import MqttMsgRateMonitor
 from mqtt_recorder import MqttRecorder
+from utils.rotating_record_file_writer import RotatingRecordFileWriter
+from utils.azure_blob_uploader import AzureBlobUploader
 from utils.env_vars import set_env_vars
 from utils.logger import Logger
 
@@ -20,10 +22,13 @@ msg_rate_interval_secs = int(os.getenv('MSG_RATE_INTERVAL_SECS')) if ('MSG_RATE_
 recording: bool = bool(strtobool(os.getenv('RECORDING'))) if ('RECORDING' in os.environ) else False
 max_storage_size_gb: float = float(os.getenv('MAX_STORAGE_SIZE_GB')) if ('MAX_STORAGE_SIZE_GB' in os.environ) else None
 max_record_size_mb: int = int(os.getenv('MAX_RECORD_SIZE_MB')) if ('MAX_RECORD_SIZE_MB' in os.environ) else 500
+uploading: bool = bool(strtobool(os.getenv('BLOB_UPLOAD_ENABLED'))) if ('BLOB_UPLOAD_ENABLED' in os.environ) else False
 
 mqtt_sub = MqttSubscriber(log, mqtt_host, mqtt_topic)
 msg_rate_monitor = MqttMsgRateMonitor(log, mqtt_sub, msg_rate_interval_secs)
-recorder = MqttRecorder(log, max_storage_size_gb=max_storage_size_gb, max_record_size_mb=max_record_size_mb)
+writer = RotatingRecordFileWriter(log, max_record_size_mb=max_record_size_mb)
+uploader = AzureBlobUploader(log, writer)
+recorder = MqttRecorder(log, writer, max_storage_size_gb=max_storage_size_gb)
 
 if (msg_rate_monitoring == True):
     msg_rate_monitor.start()
@@ -31,6 +36,9 @@ if (msg_rate_monitoring == True):
 if (recording == True):
     mqtt_sub.add_recorder(recorder)
     recorder.start()
+
+if (uploading == True):
+    uploader.start()
 
 mqtt_sub.start_sub()
 

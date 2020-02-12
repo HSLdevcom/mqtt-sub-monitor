@@ -6,6 +6,7 @@ dependencies:
   - pylint
   - pytest
   - apscheduler
+  - azure-storage-blob
   - flask
   - pip
   - pip:

@@ -1,7 +1,7 @@
 version: '3.1'
 
 services:
-  mqtt-sub-monitor:
+  mqtt-sub-recorder:
     image: hellej/mqtt-sub-monitor:latest
     environment:
      - MQTT_HOST=hsl-mqtt-lab-a.cinfra.fi
@@ -9,8 +9,19 @@ services:
      - MSG_RATE_MONITORING=True
      - MSG_RATE_INTERVAL_SECS=4
      - RECORDING=True
-     - RECORD_HOURLY_FILES=True
-     - MAX_RECORD_SIZE_GB=0.05
+     - MAX_STORAGE_SIZE_GB=0.05
+     - MAX_RECORD_SIZE_MB=2
      - FLASK_PORT=5000
+     - BLOB_UPLOAD_ENABLED=True
+     - BLOB_LIFETIME_HOURS=0.05
+     - BLOB_ACCOUNT_NAME=mqttrecords
+     - BLOB_CONTAINER_NAME=mqtt-record-test
+    secrets:
+      - source: BLOB_ACCESS_KEY_MQTT_RECORD
+        target: BLOB_ACCESS_KEY
     ports:
       - "8080:5000"
+
+secrets:
+  BLOB_ACCESS_KEY_MQTT_RECORD:
+    external: true
