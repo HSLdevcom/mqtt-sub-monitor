@@ -1,14 +1,20 @@
 import paho.mqtt.client as mqtt
 from datetime import datetime
-from logger import log
+from mqtt_recorder import MqttRecorder
+from utils.logger import Logger
 
 class MqttSubscriber:
 
-    def __init__(self, host, topic):
+    def __init__(self, log: Logger, host, topic):
+        self.log = log
         self.host = host
         self.topic = topic
-        self.client = mqtt.Client(client_id='hfp-monitoring')
+        self.client = mqtt.Client(client_id='hsl-mqtt-monitoring')
         self.msg_count = 0
+        self.recorder: MqttRecorder = None
+
+    def add_recorder(self, recorder: MqttRecorder):
+        self.recorder = recorder
 
     def start_sub(self):    
         self.client.on_connect = self.on_connect
@@ -18,13 +24,15 @@ class MqttSubscriber:
         self.client.loop_start()
 
     def on_connect(self, client, userdata, flags, rc):
-        log('connecting to broker: '+ self.host, b_print=True)
-        log('connected with result code '+ str(rc))
+        self.log.info('connecting to broker: '+ self.host)
+        self.log.info('connected with result code: '+ str(rc))
         self.client.subscribe(self.topic)
-        log('subscribed to topic: '+ self.topic)
+        self.log.info('subscribed to topic: '+ self.topic)
 
     def on_message(self, client, userdata, msg):
         self.msg_count += 1
+        if (self.recorder is not None):
+            self.recorder.record(msg)
 
     def reset_msg_count(self):
         self.msg_count = 0

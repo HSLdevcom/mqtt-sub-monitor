@@ -1,39 +1,66 @@
 import os
 import sys
-from flask import Flask, jsonify
+from distutils.util import strtobool
+from flask import Flask, jsonify, send_from_directory
+from markupsafe import escape
 from mqtt_subscriber import MqttSubscriber
-from sub_monitor import SubMonitor
+from mqtt_msg_rate_monitor import MqttMsgRateMonitor
+from mqtt_recorder import MqttRecorder
+from utils.env_vars import set_env_vars
+from utils.logger import Logger
 
+log = Logger()
+set_env_vars(log)
 app = Flask(__name__)
 
-# mqtt_host='mqtt.hsl.fi'
-# mqtt_topic='/hfp/v2/journey/ongoing/#'
-try:
-    mqtt_host = os.environ['MQTT_HOST']
-    mqtt_topic = os.environ['MQTT_TOPIC']
-except Exception:
-    print('env variables MQTT_HOST or MQTT_TOPIC missing, exiting app')
-    sys.exit()
-try:
-    monitor_interval_secs = int(os.environ['INTERVAL_SECS'])
-except Exception:
-    monitor_interval_secs = 4
+mqtt_host = os.getenv('MQTT_HOST')
+mqtt_topic = os.getenv('MQTT_TOPIC')
+msg_rate_monitoring: bool = bool(strtobool(os.getenv('MSG_RATE_MONITORING'))) if ('MSG_RATE_MONITORING' in os.environ) else True
+msg_rate_interval_secs = int(os.getenv('MSG_RATE_INTERVAL_SECS')) if ('MSG_RATE_INTERVAL_SECS' in os.environ) else 5
+recording: bool = bool(strtobool(os.getenv('RECORDING'))) if ('RECORDING' in os.environ) else False
+record_hourly_files: bool = bool(strtobool(os.getenv('RECORD_HOURLY_FILES'))) if ('RECORD_HOURLY_FILES' in os.environ) else False
+max_record_size_gb: float = float(os.getenv('MAX_RECORD_SIZE_GB')) if ('MAX_RECORD_SIZE_GB' in os.environ) else None
 
-mqtt_sub = MqttSubscriber(mqtt_host, mqtt_topic)
-sub_monitor = SubMonitor(mqtt_sub, monitor_interval_secs)
+mqtt_sub = MqttSubscriber(log, mqtt_host, mqtt_topic)
+msg_rate_monitor = MqttMsgRateMonitor(log, mqtt_sub, msg_rate_interval_secs)
+recorder = MqttRecorder(log, hourly_files=record_hourly_files, max_record_size_gb=max_record_size_gb)
+
+if (msg_rate_monitoring == True):
+    msg_rate_monitor.start()
+
+if (recording == True):
+    mqtt_sub.add_recorder(recorder)
+    recorder.start()
+
 mqtt_sub.start_sub()
 
 @app.route('/')
 def default():
-    return "paths available: /anomalies & /status" 
+    return jsonify({
+        'available_paths': ['/get_latest_record', '/get_record/<record_name>', '/msg_rate_anomalies'],
+        'recorder_status': recorder.get_status() if recorder is not None else None,
+        'subscription_info': msg_rate_monitor.get_status()
+    })
 
-@app.route('/anomalies')
+@app.route('/get_latest_record')
+def latest_record():
+    if (recorder is not None):
+        return send_from_directory(recorder.records_dir, recorder.current_record_file)
+    else:
+        return 'no recorder found'
+
+@app.route('/get_record/<record_name>')
+def specific_record(record_name):
+    if (recorder is not None):
+        return send_from_directory(recorder.records_dir, escape(record_name))
+    else:
+        return 'no recorder found'
+
+@app.route('/msg_rate_anomalies')
 def anomaly_logs():
-    return jsonify(sub_monitor.get_anomaly_log())
+    return jsonify(msg_rate_monitor.get_anomaly_log())
 
-@app.route('/status')
-def sub_status():
-    return jsonify(sub_monitor.get_status())
+flask_port = int(os.getenv('FLASK_PORT')) if ('FLASK_PORT' in os.environ) else 5000
 
 if __name__ == '__main__':
-    app.run(debug=False,host='0.0.0.0')
+    app.run(debug=False, host='0.0.0.0', port=flask_port)

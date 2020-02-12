@@ -1,0 +1,16 @@
+version: '3.1'
+
+services:
+  mqtt-sub-monitor:
+    image: hellej/mqtt-sub-monitor:latest
+    environment:
+     - MQTT_HOST=hsl-mqtt-lab-a.cinfra.fi
+     - MQTT_TOPIC=metro-mipro-ats/v1/schedule/#
+     - MSG_RATE_MONITORING=True
+     - MSG_RATE_INTERVAL_SECS=4
+     - RECORDING=True
+     - RECORD_HOURLY_FILES=True
+     - MAX_RECORD_SIZE_GB=0.05
+     - FLASK_PORT=5000
+    ports:
+      - "8080:5000"
