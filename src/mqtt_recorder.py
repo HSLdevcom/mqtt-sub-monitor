@@ -25,7 +25,6 @@ class MqttRecorder:
         if (self.max_storage_size_gb is not None):
             self.scheduler.add_job(self.maybe_disable_recorder, 'interval', seconds=2)
 
-        self.scheduler.add_job(self.log_recording_rate, 'interval', seconds=20)
         self.scheduler.start()
         self.disabled = False
 
@@ -49,21 +48,6 @@ class MqttRecorder:
             else:
                 self.disabled = False
 
-    def log_recording_rate(self) -> None:
-        status_update_time = datetime.utcnow()
-        records_size_mb = self.get_storage_size_mb()
-
-        status_interval_secs = (status_update_time - self.last_status_time).total_seconds()
-        records_size_delta_mb = records_size_mb - self.last_storage_size
-
-        self.last_status_time = status_update_time
-        self.last_storage_size = records_size_mb
-
-        self.recording_rate_mb_s = records_size_delta_mb/status_interval_secs
-        data_rate_mb_min = self.recording_rate_mb_s * 60
-
-        self.log.info('recording at rate mb/s: '+ str(round(self.recording_rate_mb_s, 3)) + ' = /min: '+ str(round(data_rate_mb_min, 3)) + ' /h: '+ str(round(data_rate_mb_min * 60, 3)))
-    
     def get_write_time(self) -> str:
         return datetime.utcnow().strftime('%y/%m/%d %H:%M:%S.%f')[:-4] + '-UTC'
 
@@ -71,8 +55,6 @@ class MqttRecorder:
         return {
             'disabled': self.disabled,
             'total_record_size_G': self.get_storage_size_gb(),
-            'recording_rate_mb_s': round(self.recording_rate_mb_s, 3),
-            'recording_rate_mb_h': round(self.recording_rate_mb_s*60*60, 3),
             'max_storage_size_G': self.max_storage_size_gb,
             'max_record_size_M': self.writer.max_record_size_mb,
             'current_record_file': self.writer.current_record_file,
