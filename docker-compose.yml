@@ -1,7 +1,7 @@
 version: '3.1'
 
 services:
-  mqtt:
+  mqtt-sub-monitor:
     image: hellej/mqtt-sub-monitor:latest
     environment:
      - MQTT_HOST=hsl-mqtt-lab-a.cinfra.fi
