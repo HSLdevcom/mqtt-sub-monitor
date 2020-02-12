@@ -11,6 +11,7 @@ from utils.logger import Logger
 
 log = Logger()
 set_env_vars(log)
+app = Flask(__name__)
 
 mqtt_host = os.getenv('MQTT_HOST')
 mqtt_topic = os.getenv('MQTT_TOPIC')
@@ -22,29 +23,24 @@ max_record_size_gb: float = float(os.getenv('MAX_RECORD_SIZE_GB')) if ('MAX_RECO
 
 mqtt_sub = MqttSubscriber(log, mqtt_host, mqtt_topic)
 msg_rate_monitor = MqttMsgRateMonitor(log, mqtt_sub, msg_rate_interval_secs)
+recorder = MqttRecorder(log, hourly_files=record_hourly_files, max_record_size_gb=max_record_size_gb)
 
 if (msg_rate_monitoring == True):
     msg_rate_monitor.start()
 
-recorder: MqttRecorder = None
 if (recording == True):
-    recorder = MqttRecorder(log, 'records/', hourly_files=record_hourly_files, max_record_size_gb=max_record_size_gb)
     mqtt_sub.add_recorder(recorder)
+    recorder.start()
 
 mqtt_sub.start_sub()
 
-app = Flask(__name__)
-
 @app.route('/')
 def default():
-    return "paths available: /recorder_status, /get_latest_record, /get_record/<record_name>, /msg_rate_anomalies & /msg_rate_status" 
-
-@app.route('/recorder_status')
-def recorder_status():
-    if (recorder is not None):
-        return jsonify(recorder.get_status())
-    else: 
-        return 'no recorder found'
+    return jsonify({
+        'available_paths': ['/get_latest_record', '/get_record/<record_name>', '/msg_rate_anomalies'],
+        'recorder_status': recorder.get_status() if recorder is not None else None,
+        'subscription_info': msg_rate_monitor.get_status()
+    })
 
 @app.route('/get_latest_record')
 def latest_record():
@@ -63,10 +59,6 @@ def specific_record(record_name):
 @app.route('/msg_rate_anomalies')
 def anomaly_logs():
     return jsonify(msg_rate_monitor.get_anomaly_log())
-
-@app.route('/msg_rate_status')
-def sub_status():
-    return jsonify(msg_rate_monitor.get_status())
 
 flask_port = int(os.getenv('FLASK_PORT')) if ('FLASK_PORT' in os.environ) else 5000
 

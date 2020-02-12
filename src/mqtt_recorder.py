@@ -7,44 +7,37 @@ class MqttRecorder:
 
     def __init__(self, log: Logger, records_dir: str = 'records/', hourly_files: bool = False, max_record_size_gb: int = None):
         self.log = log
-        self.disabled: bool = False
+        self.disabled: bool = True
         self.records_dir: str = records_dir
         self.current_record_file: str = self.get_new_record_name()
         self.all_record_files: list = [self.get_new_record_name()]
         self.max_record_size_gb: int = max_record_size_gb
         self.b_hourly_files: bool = hourly_files
         self.scheduler = None
-        self.setup_recorder_updater()
         self.last_status_time = datetime.utcnow()
         self.last_record_size = 0
         self.recording_rate_mb_s = 0
-        self.log.info('set maximum record size to: '+ str(max_record_size_gb) +' G')
-        self.log.info('starting mqtt recording to: '+ self.current_record_file)
 
-    def get_new_record_name(self) -> str:
-        return datetime.utcnow().strftime('%y-%m-%d-%H') + 'UTC.txt'        
-
-    def get_write_time(self):
-        return datetime.utcnow().strftime('%y/%m/%d %H:%M:%S.%f')[:-4] + '-UTC'
-
-    def record(self, msg) -> None:
-        if (self.disabled != True):
-            with open(self.records_dir + self.current_record_file, 'a') as the_file:
-                the_file.write(self.get_write_time() +' '+ msg.topic +' '+ str(msg.payload) + '\n')
-
-    def setup_recorder_updater(self) -> None:
+    def start(self) -> None:
+        self.log.info('starting msg recording to: '+ self.current_record_file + ' with max record size: '+ str(self.max_record_size_gb) + ' G')
         self.scheduler = BackgroundScheduler()
 
         if (self.b_hourly_files == True):
             self.log.info('set recording to use hourly files')
-            self.scheduler.add_job(self.maybe_update_record_file, 'interval', seconds=1)
+            self.scheduler.add_job(self.maybe_update_record_file, 'interval', seconds=2)
 
         if (self.max_record_size_gb is not None):
             self.scheduler.add_job(self.maybe_disable_recorder, 'interval', seconds=2)
 
         self.scheduler.add_job(self.log_recording_rate, 'interval', seconds=10)
         self.scheduler.start()
+        self.disabled = False
 
+    def record(self, msg) -> None:
+        if (self.disabled != True):
+            with open(self.records_dir + self.current_record_file, 'a') as the_file:
+                the_file.write(self.get_write_time() +' '+ msg.topic +' '+ str(msg.payload) + '\n')
+    
     def maybe_update_record_file(self) -> None:
         new_record_name = self.get_new_record_name()
         if (self.current_record_file != new_record_name):
@@ -79,9 +72,17 @@ class MqttRecorder:
         data_rate_mb_min = self.recording_rate_mb_s * 60
 
         self.log.info('recording at rate mb/s: '+ str(round(self.recording_rate_mb_s, 3)) + ' = /min: '+ str(round(data_rate_mb_min, 3)) + ' /h: '+ str(round(data_rate_mb_min * 60, 3)))
+    
+
+    def get_new_record_name(self) -> str:
+        return datetime.utcnow().strftime('%y-%m-%d-%H') + 'UTC.txt'        
+
+    def get_write_time(self):
+        return datetime.utcnow().strftime('%y/%m/%d %H:%M:%S.%f')[:-4] + '-UTC'
 
     def get_status(self):
         return {
+            'disabled': self.disabled,
             'total_record_size_G': self.get_records_size_gb(),
             'recording_rate_mb_s': round(self.recording_rate_mb_s, 3),
             'recording_rate_mb_h': round(self.recording_rate_mb_s*60*60, 3),

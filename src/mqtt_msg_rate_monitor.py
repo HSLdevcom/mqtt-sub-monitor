@@ -13,10 +13,10 @@ class MqttMsgRateMonitor:
         self.prev_msg_time = None
         self.anomaly_log = []
         self.scheduler = BackgroundScheduler()
-        self.scheduler.add_job(self.report_sub_stats, 'interval', seconds=monitor_interval_secs)
-        self.log.info('starting msg rate monitoring with interval (s): '+ str(monitor_interval_secs))
     
     def start(self):
+        self.log.info('starting msg rate monitoring with interval (s): '+ str(self.monitor_interval_secs))
+        self.scheduler.add_job(self.report_sub_stats, 'interval', seconds=self.monitor_interval_secs)
         self.scheduler.start()
 
     def report_sub_stats(self):
